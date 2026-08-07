@@ -1,0 +1,13 @@
+# node_modules especially: the image runs npm ci itself, and copying a host-built tree in is
+# both slow and wrong (native deps are built for the host, not the image).
+
+.env
+.env.*
+*.local.env
+
+node_modules/
+dist/
+.git
+.idea/
+*.log
+.DS_Store

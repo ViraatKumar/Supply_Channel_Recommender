@@ -1,0 +1,25 @@
+# Safety net only. docker-compose builds use ./backend and ./frontend as their contexts, so
+# backend/.dockerignore and frontend/.dockerignore are the files that actually take effect.
+# This one covers the case where the build context is ever the repo root.
+
+local.env
+*.local.env
+.env
+.env.*
+!.env.example
+
+.git
+.gitignore
+target/
+build/
+node_modules/
+dist/
+
+*.log
+.DS_Store
+.idea/
+*.iml
+.vscode/
+
+README.md
+docs/

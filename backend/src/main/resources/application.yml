@@ -1,0 +1,47 @@
+spring:
+  application:
+    name: supply-recommender
+
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/supply}
+    username: ${SPRING_DATASOURCE_USERNAME:supply}
+    password: ${SPRING_DATASOURCE_PASSWORD:supply}
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    open-in-view: false
+    properties:
+      hibernate.format_sql: true
+
+  sql:
+    init:
+      mode: always
+
+  ai:
+    google:
+      genai:
+        api-key: ${GEMINI_API_KEY:not-configured}
+        chat:
+          options:
+            model: gemini-3.6-flash
+
+app:
+  ai:
+    api-key: ${GEMINI_API_KEY:}
+    max-brief-chars: 6000
+
+logging:
+  level:
+    org.hibernate.SQL: warn
+
+---
+spring:
+  config:
+    activate:
+      on-profile: h2
+  datasource:
+    url: jdbc:h2:mem:supply;MODE=PostgreSQL;DB_CLOSE_DELAY=-1
+    username: sa
+    password: ''
+    driver-class-name: org.h2.Driver

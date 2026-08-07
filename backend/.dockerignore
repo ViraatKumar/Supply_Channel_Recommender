@@ -1,0 +1,14 @@
+# Keeps secrets and local build output out of the image layers. The Dockerfile builds from
+# source inside the container, so a host-built target/ would only bloat the context.
+
+local.env
+*.local.env
+.env
+.env.*
+
+target/
+.git
+.idea/
+*.iml
+*.log
+.DS_Store

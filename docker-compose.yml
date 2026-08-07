@@ -1,0 +1,44 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: joveo-supply-db
+    environment:
+      POSTGRES_DB: supply
+      POSTGRES_USER: supply
+      POSTGRES_PASSWORD: supply
+    ports:
+      # 5433 on the host: the API reaches the database over the compose network, so this
+      # mapping exists only so you can psql into it — and 5432 is usually already taken
+      # by a local Postgres install.
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U supply -d supply"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+    container_name: joveo-supply-api
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/supply
+      SPRING_DATASOURCE_USERNAME: supply
+      SPRING_DATASOURCE_PASSWORD: supply
+      # Optional. Without it the app runs fine and the AI brief parser reports
+      # itself unavailable — see README "AI feature and fallback".
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+    ports:
+      - "8080:8080"
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: joveo-supply-web
+    depends_on:
+      - backend
+    ports:
+      - "5173:80"
