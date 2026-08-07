@@ -1,7 +1,7 @@
-/** Same-origin in both dev (Vite proxy) and prod (nginx), so there is no base URL to configure. */
+const BASE = import.meta.env.VITE_API_BASE_URL ?? '';
 
 export async function getRecommendations(campaign) {
-  const response = await fetch('/api/recommendations', {
+  const response = await fetch(`${BASE}/api/recommendations`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(campaign),
@@ -22,7 +22,7 @@ export async function getRecommendations(campaign) {
  */
 export async function parseBrief(brief) {
   try {
-    const response = await fetch('/api/parse-brief', {
+    const response = await fetch(`${BASE}/api/parse-brief`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ brief }),
