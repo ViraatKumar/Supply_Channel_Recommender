@@ -117,11 +117,15 @@ export default function Results({ result }) {
           <ul>
             {excluded.map((e) => (
               <li key={e.channelId}>
-                <div>
-                  <strong>{e.channelName}</strong>
-                  <span className="pill pill-rule">{e.rule.replace('_', ' ').toLowerCase()}</span>
-                </div>
-                <p>{e.reason}</p>
+                <strong>{e.channelName}</strong>
+                <ul className="rejections">
+                  {e.rejections.map((r) => (
+                    <li key={r.rule} className="rejection-row">
+                      <span className="pill pill-rule">{r.rule.replace(/_/g, ' ').toLowerCase()}</span>
+                      <p>{r.reason}</p>
+                    </li>
+                  ))}
+                </ul>
               </li>
             ))}
           </ul>

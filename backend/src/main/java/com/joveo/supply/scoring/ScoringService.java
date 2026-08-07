@@ -51,34 +51,31 @@ public class ScoringService {
         for (int i = 0; i < scored.size(); i++) {
             recommendations.add(scored.get(i).toRecommendation(i + 1, request, profile));
         }
-        excluded.sort(Comparator.comparing(ExcludedChannel::rule).thenComparing(ExcludedChannel::channelName));
+        excluded.sort(Comparator.comparing(ExcludedChannel::channelName));
 
         return new RecommendationResponse(recommendations, excluded, profile, profile.asMap(),
                 WeightProfile.rationaleFor(request, profile));
     }
 
     private static ExcludedChannel exclude(Channel channel, CampaignRequest request) {
+        List<ExcludedChannel.RejectionReason> rejections = new ArrayList<>();
         if (channel.getMinBudget() > request.budget()) {
-            return reject(channel, "MIN_BUDGET", "Minimum spend of %s exceeds the campaign budget of %s."
-                    .formatted(inr(channel.getMinBudget()), inr(request.budget())));
+            rejections.add(new ExcludedChannel.RejectionReason("MIN_BUDGET", "Minimum spend of %s exceeds the campaign budget of %s."
+                    .formatted(inr(channel.getMinBudget()), inr(request.budget()))));
         }
         if (channel.getLeadTimeDays() >= request.timelineDays()) {
-            return reject(channel, "LEAD_TIME", "Lead time of %d days leaves no delivery window inside a %d-day timeline."
-                    .formatted(channel.getLeadTimeDays(), request.timelineDays()));
+            rejections.add(new ExcludedChannel.RejectionReason("LEAD_TIME", "Lead time of %d days leaves no delivery window inside a %d-day timeline."
+                    .formatted(channel.getLeadTimeDays(), request.timelineDays())));
         }
         if (!request.remoteOk() && !channel.servesLocation(request.location())) {
-            return reject(channel, "LOCATION", "Does not supply applicants in %s (covers: %s)."
-                    .formatted(request.location(), String.join(", ", channel.getSupportedLocations())));
+            rejections.add(new ExcludedChannel.RejectionReason("LOCATION", "Does not supply applicants in %s (covers: %s)."
+                    .formatted(request.location(), String.join(", ", channel.getSupportedLocations()))));
         }
         if (!request.skills().isEmpty() && request.skills().stream().noneMatch(s -> hasTag(channel, s))) {
-            return reject(channel, "SKILL_OVERLAP", "No overlap with the required skills (%s); this channel supplies %s."
-                    .formatted(String.join(", ", request.skills()), String.join(", ", channel.getSkillTags())));
+            rejections.add(new ExcludedChannel.RejectionReason("SKILL_OVERLAP", "No overlap with the required skills (%s); this channel supplies %s."
+                    .formatted(String.join(", ", request.skills()), String.join(", ", channel.getSkillTags()))));
         }
-        return null;
-    }
-
-    private static ExcludedChannel reject(Channel channel, String rule, String reason) {
-        return new ExcludedChannel(channel.getId(), channel.getName(), rule, reason);
+        return rejections.isEmpty() ? null : new ExcludedChannel(channel.getId(), channel.getName(), rejections);
     }
 
     private static Scored score(Channel channel, CampaignRequest request, WeightProfile profile) {

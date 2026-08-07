@@ -48,10 +48,11 @@ class ScoringServiceTest {
                     scoring.recommend(List.of(expensive), request(10, 20_000, 30));
 
             assertThat(response.recommendations()).isEmpty();
-            assertThat(response.excluded())
-                    .singleElement()
-                    .extracting(ExcludedChannel::rule, ExcludedChannel::channelId)
-                    .containsExactly("MIN_BUDGET", "newsletter");
+            assertThat(response.excluded()).singleElement().satisfies(e -> {
+                assertThat(e.channelId()).isEqualTo("newsletter");
+                assertThat(e.rejections()).extracting(ExcludedChannel.RejectionReason::rule)
+                        .containsExactly("MIN_BUDGET");
+            });
         }
 
         @Test
@@ -63,8 +64,9 @@ class ScoringServiceTest {
                     scoring.recommend(List.of(slow), request(10, 100_000, 14));
 
             assertThat(response.recommendations()).isEmpty();
-            assertThat(response.excluded()).singleElement()
-                    .extracting(ExcludedChannel::rule).isEqualTo("LEAD_TIME");
+            assertThat(response.excluded()).singleElement().satisfies(e ->
+                    assertThat(e.rejections()).extracting(ExcludedChannel.RejectionReason::rule)
+                            .containsExactly("LEAD_TIME"));
         }
 
         @Test
@@ -76,8 +78,9 @@ class ScoringServiceTest {
                     30, List.of("engineering"), Seniority.MID, false, null, null);
 
             RecommendationResponse onsite = scoring.recommend(List.of(indiaOnly), berlin);
-            assertThat(onsite.excluded()).singleElement()
-                    .extracting(ExcludedChannel::rule).isEqualTo("LOCATION");
+            assertThat(onsite.excluded()).singleElement().satisfies(e ->
+                    assertThat(e.rejections()).extracting(ExcludedChannel.RejectionReason::rule)
+                            .containsExactly("LOCATION"));
 
             CampaignRequest remote = new CampaignRequest("Backend Engineer", "Berlin", 10, 100_000,
                     30, List.of("engineering"), Seniority.MID, true, null, null);
@@ -96,20 +99,22 @@ class ScoringServiceTest {
             RecommendationResponse response =
                     scoring.recommend(List.of(blueCollar), request(10, 100_000, 30));
 
-            assertThat(response.excluded()).singleElement()
-                    .extracting(ExcludedChannel::rule).isEqualTo("SKILL_OVERLAP");
+            assertThat(response.excluded()).singleElement().satisfies(e ->
+                    assertThat(e.rejections()).extracting(ExcludedChannel.RejectionReason::rule)
+                            .containsExactly("SKILL_OVERLAP"));
         }
 
         @Test
-        @DisplayName("the first failing rule is the one reported, so the reason is the most useful one")
-        void reportsTheMostFundamentalFailure() {
+        @DisplayName("all failing rules are reported for a channel that fails multiple checks")
+        void reportsAllFailingRules() {
             Channel doomed = channel("doomed", 100, 999_999, 50, 8, 60);
 
             RecommendationResponse response =
                     scoring.recommend(List.of(doomed), request(10, 20_000, 30));
 
-            assertThat(response.excluded()).singleElement()
-                    .extracting(ExcludedChannel::rule).isEqualTo("MIN_BUDGET");
+            assertThat(response.excluded()).singleElement().satisfies(e ->
+                    assertThat(e.rejections()).extracting(ExcludedChannel.RejectionReason::rule)
+                            .containsExactlyInAnyOrder("MIN_BUDGET", "LEAD_TIME"));
         }
     }
 

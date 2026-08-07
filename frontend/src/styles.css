@@ -430,3 +430,18 @@ form.card > button[type='submit'] {
   font-size: 13px;
   color: var(--ink-soft);
 }
+
+.rejections {
+  margin: 6px 0 0;
+  gap: 8px;
+}
+
+.rejection-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.rejection-row p {
+  margin: 0;
+}
